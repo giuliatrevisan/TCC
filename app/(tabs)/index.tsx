@@ -1,4 +1,3 @@
-// index.tsx
 import React, { useState } from 'react';
 import { View, Text, ScrollView, SafeAreaView, Alert, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -50,19 +49,18 @@ function encontrarMaterialPorC(c: number) {
   };
 }
 
-function estimarC(comprimento: number, diametro: number): number {
-  let base = 120;
-  if (comprimento > 1000) base -= 5;
-  if (comprimento > 2000) base -= 10;
-  if (diametro < 100) base -= 5;
-  if (diametro < 50) base -= 10;
-  return Math.max(80, Math.min(base, 140));
+function calcularC(vazao: number, diametro: number, comprimento: number, deltaH: number): number {
+  const D = diametro / 1000; // mm -> m
+  const S = comprimento > 0 ? Math.abs(deltaH) / comprimento : 0.01;
+  const Q = vazao; // m³/s
+  const C = Math.pow(Q / (0.849 * Math.pow(D, 2.63) * Math.pow(S, 0.54)), 1 / 1.85);
+  return C;
 }
 
 export default function HomeScreen() {
   const [nodes, setNodes] = useState<string[]>([]);
   const [links, setLinks] = useState<string[]>([]);
-  
+
   type Comparacao = { material: string; media: number; diferenca: number };
   type MaterialResultado = {
     id: string;
@@ -86,6 +84,7 @@ export default function HomeScreen() {
       const nodeSection: string[] = [];
       const linkSection: string[] = [];
       const materiaisSection: MaterialResultado[] = [];
+      const cotasMap = new Map<string, number>();
 
       let currentSection = '';
 
@@ -106,22 +105,34 @@ export default function HomeScreen() {
 
         if (currentSection === 'nodes' && trimmedLine && !trimmedLine.startsWith(';')) {
           nodeSection.push(trimmedLine);
+          const colunas = trimmedLine.split(/\s+/);
+          const id = colunas[0];
+          const cota = parseFloat(colunas[2]);
+          if (!isNaN(cota)) {
+            cotasMap.set(id, cota);
+          }
         }
 
         if (currentSection === 'links' && trimmedLine && !trimmedLine.startsWith(';')) {
           linkSection.push(trimmedLine);
           const colunas = trimmedLine.split(/\s+/);
           const id = colunas[0];
+          const noInicio = colunas[1];
+          const noFim = colunas[2];
           const comprimento = parseFloat(colunas[3]);
           const diametro = parseFloat(colunas[4]);
           let c = parseFloat(colunas[5]);
           let estimado = false;
-
-          if (isNaN(c)) {
-            c = estimarC(comprimento, diametro);
+          
+          if (isNaN(c) || c === 0) {
+            const cotaInicio = cotasMap.get(noInicio) ?? 0;
+            const cotaFim = cotasMap.get(noFim) ?? 0;
+            const deltaH = cotaInicio - cotaFim;
+            const vazao = 0.01; // valor padrão em m³/s
+            c = calcularC(vazao, diametro, comprimento, deltaH);
             estimado = true;
           }
-
+          
           const resultado = encontrarMaterialPorC(c);
           materiaisSection.push({
             id,

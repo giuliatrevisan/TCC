@@ -1,4 +1,3 @@
-// ResultadoMaterial.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MotiView } from 'moti';
@@ -14,7 +13,7 @@ interface MaterialResultado {
   nome: string;
   valorOriginal: number;
   comparacoes: Comparacao[];
-  estimado: boolean; // novo campo
+  estimado: boolean;
 }
 
 interface ResultadoMaterialProps {
@@ -24,13 +23,17 @@ interface ResultadoMaterialProps {
 
 export function ResultadoMaterial({ material, index }: ResultadoMaterialProps) {
   const [expandido, setExpandido] = useState(false);
-  const coresAlternadas = ['#3B82F6', '#1E3A8A'];
-  const corFundo = expandido ? '#90ee90' : coresAlternadas[index % 2];
+  const coresAlternadas = ['#E0F2FE', '#DBEAFE'];
+  const corFundo = expandido ? '#BBF7D0' : coresAlternadas[index % 2];
 
   return (
-    <TouchableOpacity onPress={() => setExpandido(!expandido)} activeOpacity={0.9}>
+    <TouchableOpacity onPress={() => {
+      setExpandido(!expandido)
+      console.log('📦 Dados do material:', material)
+    }} activeOpacity={0.9}>
       <MotiView
         from={{ opacity: 0, translateY: -20 }}
+
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ type: "timing", duration: 500 }}
         style={{
@@ -38,53 +41,72 @@ export function ResultadoMaterial({ material, index }: ResultadoMaterialProps) {
           borderRadius: 12,
           padding: 16,
           marginBottom: 12,
+          borderWidth: expandido ? 2 : 1,
+          borderColor: expandido ? '#15803D' : '#CBD5E1',
         }}
       >
-        <View style={{ backgroundColor: '#3B82F6', padding: 8, borderRadius: 8, marginBottom: 6 }}>
+        {/* Cabeçalho */}
+        <View style={{ backgroundColor: '#2563EB', padding: 10, borderRadius: 8, marginBottom: 8 }}>
           <Text style={{ color: "#fff", fontSize: 16, fontWeight: 'bold' }}>
             🔹 Tubo: {material.id}
           </Text>
         </View>
 
-        <View style={{ backgroundColor: '#1E3A8A', padding: 8, borderRadius: 8, marginBottom: 6 }}>
+
+        <View style={{ backgroundColor: '#1E3A8A', padding: 10, borderRadius: 8 }}>
           <Text style={{ color: "#fff", fontSize: 16 }}>
-            C informado: {material.valorOriginal}
+            C informado: {material.estimado ? 0 : material.valorOriginal.toFixed(2)}
           </Text>
+
+
           {material.estimado && (
-            <Text style={{ color: '#FFD700', marginTop: 4 }}>
+            <Text style={{ color: '#FACC15', marginTop: 4 }}>
               ⚠️ Valor estimado devido à ausência de rugosidade no arquivo.
             </Text>
           )}
         </View>
 
+
+
+
+
+        {/* Detalhes ao expandir */}
         {expandido && (
           <>
-            <Text style={{ fontSize: 16, marginTop: 8, fontWeight: '800' }}>
-              🔸 Mais próximo: <Text style={{ color: "#ff0000" }}>{material.nome}</Text>  (C médio: {material.comparacoes[0].media})
-            </Text>
-            <Text style={{ fontSize: 16, marginTop: 5 }}>
-              📉 Diferença: {material.comparacoes[0].diferenca}
-            </Text>
+            <View style={{ marginTop: 12 }}>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0F172A' }}>
+                🔸 Material mais próximo:
+              </Text>
+              <Text style={{ fontSize: 16, color: '#DC2626' }}>
+                {material.nome} (C médio: {material.comparacoes[0].media})
+              </Text>
+              <Text style={{ fontSize: 16, marginTop: 4 }}>
+                📉 Diferença: {material.comparacoes[0].diferenca}
+              </Text>
+            </View>
 
-            <Text style={{ fontSize: 14, marginTop: 8 }}>
-              Materiais mais próximos:
-            </Text>
+            <View style={{ marginTop: 10 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600' }}>
+                Materiais mais próximos:
+              </Text>
 
-            {material.comparacoes.map((comp: Comparacao, idx: number) => (
-              <View
-                key={idx}
-                style={{
-                  backgroundColor: idx % 2 === 0 ? '#3B82F6' : '#1E3A8A',
-                  padding: 8,
-                  borderRadius: 6,
-                  marginTop: 6,
-                }}
-              >
-                <Text style={{ color: "#fff", fontSize: 14 }}>
-                  • {comp.material} (C = {comp.media}, dif = {comp.diferenca})
-                </Text>
-              </View>
-            ))}
+              {material.comparacoes.map((comp, idx) => (
+                <View
+                  key={idx}
+                  style={{
+                    backgroundColor: idx % 2 === 0 ? '#93C5FD' : '#BFDBFE',
+                    padding: 8,
+                    borderRadius: 6,
+                    marginTop: 6,
+                  }}
+                >
+                  <Text style={{ color: '#1E3A8A', fontSize: 14 }}>
+                    • {comp.material} (C = {comp.media.toFixed(2)}, dif = {comp.diferenca.toFixed(2)})
+                  </Text>
+
+                </View>
+              ))}
+            </View>
           </>
         )}
       </MotiView>
